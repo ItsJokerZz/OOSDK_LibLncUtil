@@ -1,4 +1,5 @@
-*.prx
-*.elf
-*.a
+*.so
 *.o
+*.elf
+*.oelf
+*.prx
