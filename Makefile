@@ -18,7 +18,7 @@ CFLAGS    := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c \
 CXXFLAGS  := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 -std=c++20 -Iinclude -DFMT_HEADER_ONLY
 
 LDFLAGS_PRX := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
-                -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o
+                -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o -wrap=_init -wrap=_fini
 
 LDFLAGS_SO := -shared --export-dynamic -L$(TOOLCHAIN)/lib $(LIBS)
 
