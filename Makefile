@@ -5,7 +5,7 @@ INTDIR    := build
 PRX_TARGET := LibLncUtil.prx
 SO_TARGET  := LibLncUtil.so
 
-LIBS      := -lc -lc++ -lz -lkernel -lSceLibcInternal \
+LIBS      := -lc -lc++ -lz -lkernel -lSceLibcInternal -lSceSysmodule \
              -lSceSystemService -lSceUserService -lSceLncUtil
 
 CPPFILES  := $(wildcard $(PROJDIR)/*.cpp)

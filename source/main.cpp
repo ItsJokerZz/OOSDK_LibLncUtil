@@ -1,6 +1,7 @@
 // Huge shoutout to https://github.com/OSM-Made 😁
 
 #include <orbis/libkernel.h>
+#include <orbis/Sysmodule.h>
 #include <orbis/SystemService.h>
 #include <orbis/UserService.h>
 
@@ -38,7 +39,7 @@ namespace hidden /* Function Helper Methods */
                 if (entry->d_type == DT_DIR)
                 {
                     std::string name = entry->d_name;
-                    if (name != "." && name != "..")
+                    if (name != "." && name != ".." && name != "addcont" && name != "external")
                         titleIds.push_back(name);
                 }
             }
@@ -86,25 +87,33 @@ extern "C" /* Custom Wrapper Definitions */
         if (hidden::initialized)
             return 0;
 
-        int libSystemService = sceKernelLoadStartModule("/system/common/lib/libSceSystemService.sprx", 0, 0, 0, 0, 0);
-        int libUserService = sceKernelLoadStartModule("/system/common/lib/libSceUserService.sprx", 0, 0, 0, 0, 0);
+        bool success = true;
+        int result;
 
-        if (libSystemService >= 0)
+        result = sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_SYSTEM_SERVICE);
+        success &= (result != 0);
+        result = sceKernelLoadStartModule("/system/common/lib/libSceSystemService.sprx", 0, 0, 0, 0, 0);
+        success &= (result > 0);
+
+        if (success)
         {
-            OrbisUserServiceInitializeParams userServiceParams{.priority = 256};
+            OrbisUserServiceInitializeParams userServiceParams;
+            userServiceParams.priority = ORBIS_KERNEL_PRIO_FIFO_HIGHEST;
             sceUserServiceInitialize(&userServiceParams);
         }
 
-        if (libUserService >= 0)
+        result = sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
+        success &= (result != 0);
+        result = sceKernelLoadStartModule("/system/common/lib/libSceUserService.sprx", 0, 0, 0, 0, 0);
+        success &= (result > 0);
+
+        if (success)
             sceLncUtilInitialize();
+        else
+            return 1;
 
-        if (libSystemService >= 0 && libUserService >= 0)
-        {
-            hidden::initialized = true;
-            return 0;
-        }
-
-        return 1;
+        hidden::initialized = true;
+        return 0;
     }
 
     int terminate()
@@ -160,8 +169,12 @@ extern "C" /* Custom Wrapper Definitions */
 
         for (const auto &tid : hidden::getTitleIdList())
         {
-            if (hidden::appRunning(getAppIdByTitleId(tid.c_str())))
-                return (found = tid).c_str();
+            int tidAppId = getAppIdByTitleId(tid.c_str());
+            if (tidAppId == appId)
+            {
+                found = tid;
+                return found.c_str();
+            }
         }
 
         return nullptr;
