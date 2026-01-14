@@ -2,14 +2,18 @@
 
 #include "libLncUtils.h"
 
-static bool initialized = false;
+bool initialized = false;
 
-static bool appRunning(int appId)
+int sceLncUtilIsAppLaunched(const char *titleId, bool *state)
 {
-    return (appId & ~0xFFFFFF) == 0x60000000;
+    initialize();
+
+    int appId = sceLncUtilGetAppId(titleId);
+    *state = (appId & ~0xFFFFFF) == 0x60000000;
+    return 0;
 }
 
-static char **getTitleIdList(int *count)
+char **getTitleIdList(int *count)
 {
     const char *paths[] = {
         "/system_data/priv/appmeta/",
@@ -35,14 +39,12 @@ static char **getTitleIdList(int *count)
                 if (strcmp(name, ".") != 0 && strcmp(name, "..") != 0 &&
                     strcmp(name, "addcont") != 0 && strcmp(name, "external") != 0)
                 {
-                    // Resize array if needed
                     if (size >= capacity)
                     {
                         capacity = capacity == 0 ? 16 : capacity * 2;
                         titleIds = realloc(titleIds, capacity * sizeof(char *));
                     }
 
-                    // Allocate and copy string
                     titleIds[size] = malloc(strlen(name) + 1);
                     strcpy(titleIds[size], name);
                     size++;
@@ -56,7 +58,7 @@ static char **getTitleIdList(int *count)
     return titleIds;
 }
 
-static void freeTitleIdList(char **titleIds, int count)
+void freeTitleIdList(char **titleIds, int count)
 {
     if (titleIds)
     {
@@ -141,6 +143,15 @@ int getAppIdOfApp(bool miniApp)
     return sceLncUtilGetAppIdOfBigApp();
 }
 
+int getAppIdByPid(int pid)
+{
+    initialize();
+
+    /* !! UNIMPLEMENTED !! */
+
+    return -1;
+}
+
 int getAppIdByTitleId(const char *titleId)
 {
     initialize();
@@ -172,27 +183,26 @@ const char *getTitleIdByAppId(int appId)
     return NULL;
 }
 
-int sceLncUtilIsAppLaunched(const char *titleId, bool *state)
-{
-    initialize();
-
-    int appId = sceLncUtilGetAppId(titleId);
-    *state = (appId & ~0xFFFFFF) == 0x60000000;
-    return 0;
-}
-
 bool appLaunchedByTitleId(const char *titleId)
 {
     initialize();
 
-    int appId = getAppIdByTitleId(titleId);
-    return appRunning(appId);
+    bool state = false;
+    sceLncUtilIsAppLaunched(titleId, &state);
+
+    return state;
 }
 
 bool appLaunchedByAppId(int appId)
 {
-    initialize();
-    return appRunning(appId);
+    const char *titleId = getTitleIdByAppId(appId);
+    if (!titleId)
+        return false;
+
+    bool state = false;
+    sceLncUtilIsAppLaunched(titleId, &state);
+
+    return state;
 }
 
 bool appSuspendedByTitleId(const char *titleId)

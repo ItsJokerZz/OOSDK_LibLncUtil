@@ -43,8 +43,6 @@ int getAppIdOfApp(bool miniApp);
 int getAppIdByTitleId(const char *titleId);
 const char *getTitleIdByAppId(int appId);
 
-int sceLncUtilIsAppLaunched(const char *titleId, bool *state);
-
 bool appLaunchedByTitleId(const char *titleId);
 bool appLaunchedByAppId(int appId);
 
